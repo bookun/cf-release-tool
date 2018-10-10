@@ -44,19 +44,21 @@ func (c *Controller) Release() error {
 	if err != nil {
 		return err
 	}
-	targetApp := m.Applications[0]
-	domain := targetApp.Env.Domain
-	host := targetApp.Env.Host
-	entity := entity.Deploy{
-		Org:          targetApp.Env.Org,
-		Space:        targetApp.Env.Space,
-		App:          targetApp.Name,
-		ManifestFile: c.ManifestFile,
-		MaterialDir:  targetApp.Env.Material,
-		Branch:       c.Branch,
-	}
-	if err := c.InputPort.BlueGreenDeployment(entity, domain, host); err != nil {
-		return err
+	targetApps := m.Applications
+	for _, targetApp := range targetApps {
+		domain := targetApp.Env.Domain
+		host := targetApp.Env.Host
+		entity := entity.Deploy{
+			Org:          targetApp.Env.Org,
+			Space:        targetApp.Env.Space,
+			App:          targetApp.Name,
+			ManifestFile: c.ManifestFile,
+			MaterialDir:  targetApp.Env.Material,
+			Branch:       c.Branch,
+		}
+		if err := c.InputPort.BlueGreenDeployment(entity, domain, host); err != nil {
+			return err
+		}
 	}
 	return nil
 }
