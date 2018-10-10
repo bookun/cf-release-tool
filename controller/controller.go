@@ -8,17 +8,21 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// CurrentInfoGetter interface has AppExists method.
+// AppExists method is implemented in client package.
 type CurrentInfoGetter interface {
-	GetCurrentSpace() (string, error)
-	GetCurrentOrg() (string, error)
+	AppExists(app string) error
 }
 
+// Controller decides usecase, BlueGreenDeployment or normal Deployment.
 type Controller struct {
 	InputPort    usecase.InputPort
+	InfoGetter   CurrentInfoGetter
 	ManifestFile string
 	Branch       string
 }
 
+// Manifest has information of manifest.yml
 type Manifest struct {
 	Applications []struct {
 		Name       string `yaml:"name"`
@@ -39,6 +43,9 @@ type Manifest struct {
 	} `yaml:"applications"`
 }
 
+// Release executes deployment.
+// If there is application you want to release, this method executes normal deployment.
+// Else, it executes BlueGreenDeployment.
 func (c *Controller) Release() error {
 	m, err := c.getManifest()
 	if err != nil {
@@ -56,13 +63,20 @@ func (c *Controller) Release() error {
 			MaterialDir:  targetApp.Env.Material,
 			Branch:       c.Branch,
 		}
-		if err := c.InputPort.BlueGreenDeployment(entity, domain, host); err != nil {
-			return err
+		if c.InfoGetter.AppExists(entity.App) != nil {
+			if err := c.InputPort.Deployment(entity, domain, host); err != nil {
+				return err
+			}
+		} else {
+			if err := c.InputPort.BlueGreenDeployment(entity, domain, host); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
+// getManifest parse manifest file.
 func (c *Controller) getManifest() (Manifest, error) {
 	data, err := ioutil.ReadFile(c.ManifestFile)
 	if err != nil {

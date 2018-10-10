@@ -12,13 +12,15 @@ import (
 	"github.com/bookun/cf-release-tool/usecase"
 )
 
-type MockPlug struct {
+// Plug has flag information
+type Plug struct {
 	file   *string
 	branch *string
 }
 
-// Run はCF plugin では最初に起動されるメソッド
-func (c *MockPlug) Run(cliConnection plugin.CliConnection, args []string) {
+// Run is exectuted for the first time
+// This Method is implements about Run method in code.cloudfoundry.org/cli/plugin
+func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 
 	releaseFlagSet := flag.NewFlagSet("release", flag.ExitOnError)
 	manifestFile := releaseFlagSet.String("f", "manifest.yml", "The app will be released based on this manifest file")
@@ -28,10 +30,12 @@ func (c *MockPlug) Run(cliConnection plugin.CliConnection, args []string) {
 		os.Exit(1)
 	}
 	client := client.NewDummyClient(cliConnection)
+	//client := client.NewClient(cliConnection)
 	manager := manager.NewManager(client)
 	inputPort := usecase.NewUsecase(manager)
 	ctl := &controller.Controller{
 		InputPort:    inputPort,
+		InfoGetter:   client,
 		ManifestFile: *manifestFile,
 		Branch:       *branch,
 	}
@@ -41,7 +45,9 @@ func (c *MockPlug) Run(cliConnection plugin.CliConnection, args []string) {
 	}
 }
 
-func (c *MockPlug) GetMetadata() plugin.PluginMetadata {
+// GetMetadata has plugin information
+// This Method is implements about GetMetadata method in code.cloudfoundry.org/cli/plugin
+func (c *Plug) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: "ReleaseTool",
 		Version: plugin.VersionType{
@@ -52,13 +58,12 @@ func (c *MockPlug) GetMetadata() plugin.PluginMetadata {
 		Commands: []plugin.Command{
 			{
 				Name:     "release",
-				Alias:    "gootop-11",
-				HelpText: "CFアプリのリリースをします。use --help",
+				HelpText: "This plugin executes BlueGreenDeployment for PHP app based on git branch. use --help",
 				UsageDetails: plugin.Usage{
 					Usage: "release front or tool App\n	cf release [-f] <manifest file>  [-b] <branch>",
 					Options: map[string]string{
-						"file":   "リリース対象のmanifestファイルを選択してください",
-						"branch": "リリース対象のブランチを選択してください",
+						"file":   "input manifest file's path",
+						"branch": "input git branch name that you will release",
 					},
 				},
 			},
@@ -67,5 +72,5 @@ func (c *MockPlug) GetMetadata() plugin.PluginMetadata {
 }
 
 func main() {
-	plugin.Start(new(MockPlug))
+	plugin.Start(new(Plug))
 }

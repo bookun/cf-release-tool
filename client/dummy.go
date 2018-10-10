@@ -1,81 +1,75 @@
 package client
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/cloudfoundry/cli/plugin"
+	"io"
 )
 
+// DummyClient is mock about client.Client
 type DummyClient struct {
-	CC plugin.CliConnection
+	Output io.Writer
 }
 
-func NewDummyClient(cc plugin.CliConnection) *DummyClient {
+// NewDummyClient is mock about NewClient in client.go
+func NewDummyClient(output io.Writer) *DummyClient {
 	return &DummyClient{
-		CC: cc,
+		Output: output,
 	}
 }
 
-// Init で bp-configを適切なものに差し替え、
-// リリース対象のブランチを最新化。
-// 最後にspaceをリリース対象に切り替える
+// Init is mock about Init in client.go
 func (c *DummyClient) Init(materialDir, branch, org, space string) error {
-	fmt.Printf("cp -r %s ./.bp-config\n", materialDir)
-	fmt.Printf("git checkout %s\n", branch)
-	fmt.Printf("git pull origin %s\n", branch)
-	fmt.Printf("target -o %s -s %s\n", org, space)
+	fmt.Fprintf(c.Output, "rm -fr ./.bp-config\n")
+	fmt.Fprintf(c.Output, "cp -r %s ./.bp-config\n", materialDir)
+	fmt.Fprintf(c.Output, "git checkout %s\n", branch)
+	fmt.Fprintf(c.Output, "git pull origin %s\n", branch)
+	fmt.Fprintf(c.Output, "target -o %s -s %s\n", org, space)
 	return nil
 }
 
-// Push で指定した名前のアプリを cf push
+// Push is mock about Push in client.go
 func (c *DummyClient) Push(app, manifestFile string) error {
-	//TODO: manifest-front_blue なってまう
-	fmt.Printf("push %s -f %s\n", app, manifestFile)
+	fmt.Fprintf(c.Output, "push %s -f %s\n", app, manifestFile)
 	return nil
 }
 
-// Rename で名前の変更を行う
+// Rename is mock about Rename in client.go
 func (c *DummyClient) Rename(oldApp, newApp string) error {
-	fmt.Printf("rename %s to %s\n", oldApp, newApp)
+	fmt.Fprintf(c.Output, "rename %s to %s\n", oldApp, newApp)
 	return nil
 }
 
-// Delete でAppの削除を行う
+// Delete is mock about Delete in client.go
 func (c *DummyClient) Delete(app string) error {
-	fmt.Printf("delete %s\n", app)
+	fmt.Fprintf(c.Output, "delete %s\n", app)
 	return nil
 }
 
-// MapRoute で appにURLをつける
+// MapRoute is mock about MapRoute in client.go
 func (c *DummyClient) MapRoute(app, domain, host string) error {
 	if host != "" {
-		fmt.Printf("map-route %s %s --hostname %s\n", app, domain, host)
+		fmt.Fprintf(c.Output, "map-route %s %s --hostname %s\n", app, domain, host)
 	} else {
-		fmt.Printf("map-route %s %s\n", app, domain)
+		fmt.Fprintf(c.Output, "map-route %s %s\n", app, domain)
 	}
 	return nil
 }
 
-// UnMapRoute で appからURLを取る
+// UnMapRoute is mock about UnMapRoute in client.go
 func (c *DummyClient) UnMapRoute(app, domain, host string) error {
 	if host != "" {
-		fmt.Printf("unmap-route %s %s --hostname %s\n", app, domain, host)
+		fmt.Fprintf(c.Output, "unmap-route %s %s --hostname %s\n", app, domain, host)
 	} else {
-		fmt.Printf("unmap-route %s %s\n", app, domain)
+		fmt.Fprintf(c.Output, "unmap-route %s %s\n", app, domain)
 	}
 	return nil
 }
 
-func (c *DummyClient) show() {
-	fmt.Println("以下の条件でリリースを行います")
-}
-
-func (c *DummyClient) confirm(question, ans string) bool {
-	fmt.Printf("%s: ", question)
-	var userAns string
-	fmt.Scan(&userAns)
-	if userAns == ans {
-		return true
+// AppExists is mock about AppExists in client.go
+func (c *DummyClient) AppExists(app string) error {
+	if app == "nothing" {
+		return errors.New("nothing")
 	}
-	return false
+	return nil
 }

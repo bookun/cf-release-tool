@@ -2,46 +2,63 @@ package usecase
 
 import "github.com/bookun/cf-release-tool/entity"
 
-// CfManager の関数は managerパッケージで実装される
+// CfManager is aggregation of methods.
+// Each methods is implemented in manager package.
 type CfManager interface {
 	Init(materialDir, branch, org, space string) error
-	BluePush(app, manifestFile, domain, host string) (string, error)
+	GreenPush(app, manifestFile, domain, host string) (string, error)
+	Push(app, manifestFile, domain, host string) error
 	Exchange(app, blueApp string) (string, error)
-	GreenDelete(app, domain, host string) error
+	BlueDelete(app, domain, host string) error
 }
 
-// InputPort defines inputPort
+// InputPort is called by controller
 type InputPort interface {
 	BlueGreenDeployment(entity entity.Deploy, domain, host string) error
+	Deployment(entity entity.Deploy, domain, host string) error
 }
 
-// Usecase は CfManagerのもつメソッドを組み立ててユースケースを実行する
+// Usecase has CFManeger
 type Usecase struct {
 	client CfManager
 }
 
+// NewUsecase init Usecase.
 func NewUsecase(manager CfManager) *Usecase {
 	return &Usecase{
 		client: manager,
 	}
 }
 
-// BlueGreenDeployment は BlueGreenDeploymentをする
+// BlueGreenDeployment executes BlueGreenDeployment.
+// At first, it deploys new app(green app) and map-route.
+// Then, it exchanges name between green app and one that already deployed (blue app).
+// Finally, it deletes blue app.
 func (u *Usecase) BlueGreenDeployment(entity entity.Deploy, domain, host string) error {
-	// TODO: 最初の色がどっちか忘れた
 	if err := u.client.Init(entity.MaterialDir, entity.Branch, entity.Org, entity.Space); err != nil {
 		return err
 	}
-	blueApp, err := u.client.BluePush(entity.App, entity.ManifestFile, domain, host)
+	greenApp, err := u.client.GreenPush(entity.App, entity.ManifestFile, domain, host)
 	if err != nil {
 		return err
 	}
-	greenApp, err := u.client.Exchange(entity.App, blueApp)
+	blueApp, err := u.client.Exchange(entity.App, greenApp)
 	if err != nil {
 		return err
 	}
 
-	if err := u.client.GreenDelete(greenApp, domain, host); err != nil {
+	if err := u.client.BlueDelete(blueApp, domain, host); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Deployment executes deploy an app.
+func (u *Usecase) Deployment(entity entity.Deploy, domain, host string) error {
+	if err := u.client.Init(entity.MaterialDir, entity.Branch, entity.Org, entity.Space); err != nil {
+		return err
+	}
+	if err := u.client.Push(entity.App, entity.ManifestFile, domain, host); err != nil {
 		return err
 	}
 	return nil

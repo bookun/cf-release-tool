@@ -1,0 +1,19 @@
+---
+applications:
+- name: front
+  instances: 1
+  memory: 128M
+  buildpack: nttr_php72_buildpack_v1_0_6
+  no-hostname: true                                  # デプロイ時に自動的に公開されない設定
+  no-route: true
+  env:
+    TZ: Asia/Tokyo                                   # アプリのタイムゾーンを設定します。
+    LANG: ja_JP.UTF-8                                # アプリのデフォルトLANGを指定します。
+    META_APP_NAME: goo_front                         # fluentdにて付与される第3タグ マニフェストに記載がなかった場合は「Default」になります。
+    # 必須
+    ORG: gootop-11                                    # fluentdにて付与される第1タグ マニフェストに記載がなかった場合は「Default」になります。
+    SPACE: dev-kutuzawa
+    HOST: front-kutuzawa
+    DOMAIN: ms10.cf001.goo.ne.jp
+    MATERIAL: ./.bp-config.front
+

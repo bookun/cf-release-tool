@@ -1,27 +1,24 @@
 package client
 
 import (
-	"fmt"
 	"os/exec"
 
 	"github.com/cloudfoundry/cli/plugin"
 )
 
-// Client は CFの操作を行うもの
+// Client operates cloudfoundry API.
 type Client struct {
 	cc plugin.CliConnection
 }
 
-// NewClient は Clientを初期化
+// NewClient init Client
 func NewClient(cc plugin.CliConnection) *Client {
 	return &Client{
 		cc: cc,
 	}
 }
 
-// Init で bp-configを適切なものに差し替え、
-// リリース対象のブランチを最新化。
-// 最後にspaceをリリース対象に切り替える
+// Init prepare material, git branch, and cf target.
 func (c *Client) Init(materialDir, branch, org, space string) error {
 	exec.Command("rm", "-rf", "./.bp-config").Run()
 	if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
@@ -39,7 +36,7 @@ func (c *Client) Init(materialDir, branch, org, space string) error {
 	return nil
 }
 
-// Push で指定した名前のアプリを cf push
+// Push executes cf push.
 func (c *Client) Push(app, manifestFile string) error {
 	if _, err := c.cc.CliCommand("push", app, "-f", manifestFile); err != nil {
 		return err
@@ -47,7 +44,7 @@ func (c *Client) Push(app, manifestFile string) error {
 	return nil
 }
 
-// Rename で名前の変更を行う
+// Rename executes cf rename.
 func (c *Client) Rename(oldApp, newApp string) error {
 	if _, err := c.cc.CliCommand("rename", oldApp, newApp); err != nil {
 		return err
@@ -55,7 +52,7 @@ func (c *Client) Rename(oldApp, newApp string) error {
 	return nil
 }
 
-// Delete でAppの削除を行う
+// Delete executes cf delete
 func (c *Client) Delete(app string) error {
 	if _, err := c.cc.CliCommand("delete", app); err != nil {
 		return err
@@ -63,7 +60,7 @@ func (c *Client) Delete(app string) error {
 	return nil
 }
 
-// MapRoute で appにURLをつける
+// MapRoute executes cf map-route
 func (c *Client) MapRoute(app, domain, host string) error {
 	if host != "" {
 		if _, err := c.cc.CliCommand("map-route", app, domain, "--hostname", host); err != nil {
@@ -77,7 +74,7 @@ func (c *Client) MapRoute(app, domain, host string) error {
 	return nil
 }
 
-// UnMapRoute で appからURLを取る
+// UnMapRoute executes cf unmap-route
 func (c *Client) UnMapRoute(app, domain, host string) error {
 	if host != "" {
 		if _, err := c.cc.CliCommand("unmap-route", app, domain, "--hostname", host); err != nil {
@@ -91,16 +88,11 @@ func (c *Client) UnMapRoute(app, domain, host string) error {
 	return nil
 }
 
-func (c *Client) show() {
-	fmt.Println("以下の条件でリリースを行います")
-}
-
-func (c *Client) confirm(question, ans string) bool {
-	fmt.Printf("%s: ", question)
-	var userAns string
-	fmt.Scan(&userAns)
-	if userAns == ans {
-		return true
+// AppExists check if there is a app in your space
+func (c *Client) AppExists(app string) error {
+	_, err := c.cc.GetApp(app)
+	if err != nil {
+		return err
 	}
-	return false
+	return nil
 }
