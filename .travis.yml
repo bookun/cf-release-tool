@@ -7,14 +7,12 @@ go:
   - 1.10.x
 before_install:
   - go get github.com/golang/dep/...
+  - go get -v github.com/codeclimate/test-reporter
 install:
   - $GOPATH/bin/dep ensure
 before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+  - test-reporter before-build
 script:
-  - go test -coverprofile c.out github.com/bookun/cf-release-tool/...
+  - go test -coverprofile c.out ./...
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
-
+  - test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
