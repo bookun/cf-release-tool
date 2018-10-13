@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/bookun/cf-release-tool.svg?branch=master)](https://travis-ci.org/bookun/cf-release-tool) [![Maintainability](https://api.codeclimate.com/v1/badges/33d4eb3e51099945979d/maintainability)](https://codeclimate.com/github/bookun/cf-release-tool/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/33d4eb3e51099945979d/test_coverage)](https://codeclimate.com/github/bookun/cf-release-tool/test_coverage)  
+[![Build Status](https://travis-ci.org/bookun/cf-release-tool.svg?branch=master)](https://travis-ci.org/bookun/cf-release-tool) [![Maintainability](https://api.codeclimate.com/v1/badges/33d4eb3e51099945979d/maintainability)](https://codeclimate.com/github/bookun/cf-release-tool/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/22f132a98b3a4bd5f42f/test_coverage)](https://codeclimate.com/github/bookun/cf-release-tool/test_coverage)  
+
 # Blue-Green deployment tool for PHP application in cloud foundry
 
 ## Overview
