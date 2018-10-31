@@ -60,7 +60,7 @@ func (c *Controller) Release() error {
 		if len(targetApps) == 1 {
 			host, err = c.getHostName()
 			if err != nil {
-				return err
+				host = targetApp.Env.Host
 			}
 		}
 		entity := entity.Deploy{
