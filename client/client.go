@@ -1,7 +1,10 @@
 package client
 
 import (
+	"fmt"
 	"os/exec"
+	"strconv"
+	"time"
 
 	"github.com/cloudfoundry/cli/plugin"
 )
@@ -86,6 +89,42 @@ func (c *Client) UnMapRoute(app, domain, host string) error {
 		}
 	}
 	return nil
+}
+
+// TestUp execute map-route test host
+func (c *Client) TestUp(app, domain string) (bool, error) {
+	var confirm string
+	tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
+	if err := c.MapRoute(app, domain, tempHost); err != nil {
+		return false, err
+	}
+	fmt.Printf("Is it displayed properly? [y/n]")
+	fmt.Scan(&confirm)
+	if confirm == "y" {
+		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+		return false, err
+	}
+	if err := c.Delete(app); err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
+// CreateBlueName execute naming.
+// Blue app is named app name + created time
+func (c *Client) CreateBlueName(app string) (string, error) {
+	appModel, err := c.cc.GetApp(app)
+	if err != nil {
+		return "", nil
+	}
+	timeStr := appModel.PackageUpdatedAt.Format("2006-01-02_15:04:05")
+	name := fmt.Sprintf("%s_%s", app, timeStr)
+	return name, nil
 }
 
 // AppExists check if there is a app in your space

@@ -34,8 +34,8 @@
   version = "6.40.0"
 
 [[constraint]]
-  name = "gopkg.in/AlecAivazis/survey.v1"
-  version = "1.6.2"
+  name = "github.com/k0kubun/pp"
+  version = "2.3.0"
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
+	"time"
 )
 
 // DummyClient is mock about client.Client
@@ -64,6 +66,41 @@ func (c *DummyClient) UnMapRoute(app, domain, host string) error {
 		fmt.Fprintf(c.Output, "unmap-route %s %s\n", app, domain)
 	}
 	return nil
+}
+
+// TestUp execute map-route test host
+func (c *DummyClient) TestUp(app, domain string) (bool, error) {
+	var confirm string
+	tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
+	fmt.Fprintf(c.Output, "test-%s-%s\n", app, strconv.FormatInt(time.Now().Unix(), 10))
+	if err := c.MapRoute(app, domain, tempHost); err != nil {
+		return false, err
+	}
+	fmt.Printf("Is it displayed properly? [y/n]")
+	fmt.Scan(&confirm)
+	if confirm == "y" {
+		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+		return false, err
+	}
+	if err := c.Delete(app); err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
+// CreateBlueName execute naming.
+// Blue app is named app name + created time
+func (c *DummyClient) CreateBlueName(app string) (string, error) {
+	//t, err := time.Parse("2006-01-02_15:04:05", time.Now().String())
+	timeStr := time.Now().Format("2006-01-02_15:04:05")
+	name := fmt.Sprintf("%s_%s", app, timeStr)
+	fmt.Fprintf(c.Output, "blue app is named %s\n", name)
+	return name, nil
 }
 
 // AppExists is mock about AppExists in client.go

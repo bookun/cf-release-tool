@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"io/ioutil"
 
 	"github.com/bookun/cf-release-tool/entity"
@@ -20,6 +21,7 @@ type Controller struct {
 	InfoGetter   CurrentInfoGetter
 	ManifestFile string
 	Branch       string
+	Host         string
 }
 
 // Manifest has information of manifest.yml
@@ -55,6 +57,12 @@ func (c *Controller) Release() error {
 	for _, targetApp := range targetApps {
 		domain := targetApp.Env.Domain
 		host := targetApp.Env.Host
+		if len(targetApps) == 1 {
+			host, err = c.getHostName()
+			if err != nil {
+				return err
+			}
+		}
 		entity := entity.Deploy{
 			Org:          targetApp.Env.Org,
 			Space:        targetApp.Env.Space,
@@ -87,4 +95,12 @@ func (c *Controller) getManifest() (Manifest, error) {
 		return Manifest{}, err
 	}
 	return m, nil
+}
+
+func (c *Controller) getHostName() (string, error) {
+	if c.Host != "" {
+		return c.Host, nil
+	}
+	err := errors.New("host name is not specified")
+	return "", err
 }

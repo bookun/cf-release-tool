@@ -1,5 +1,7 @@
 package manager
 
+import "errors"
+
 // Client has aggregation of methods.
 // These methods are implemented in client package.
 type Client interface {
@@ -9,6 +11,8 @@ type Client interface {
 	Delete(app string) error
 	MapRoute(app, domain, host string) error
 	UnMapRoute(app, domain, host string) error
+	TestUp(app, domain string) (bool, error)
+	CreateBlueName(app string) (string, error)
 }
 
 // Manager has client.Client
@@ -38,11 +42,18 @@ func (m *Manager) GreenPush(app, manifestFile, domain, host string) (string, err
 	if err := m.client.Push(newApp, manifestFile); err != nil {
 		return "", err
 	}
-	if err := m.client.MapRoute(newApp, domain, host); err != nil {
+	confirm, err := m.client.TestUp(newApp, domain)
+	if err != nil {
 		return "", err
 	}
-	return newApp, nil
-
+	if confirm {
+		if err := m.client.MapRoute(newApp, domain, host); err != nil {
+			return "", err
+		}
+		return newApp, nil
+	}
+	err = errors.New("cancel release")
+	return "", err
 }
 
 // Push push newApp and map-route to the app.
@@ -59,7 +70,11 @@ func (m *Manager) Push(app, manifestFile, domain, host string) error {
 
 // Exchange exchange name between app andd blueApp.
 func (m *Manager) Exchange(app, blueApp string) (string, error) {
-	oldApp := app + "_blue"
+	//oldApp := app + "_blue"
+	oldApp, err := m.client.CreateBlueName(app)
+	if err != nil {
+		return "", err
+	}
 	if err := m.client.Rename(app, oldApp); err != nil {
 		return "", err
 	}
