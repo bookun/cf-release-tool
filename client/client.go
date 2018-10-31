@@ -122,8 +122,8 @@ func (c *Client) CreateBlueName(app string) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	timeStr := appModel.PackageUpdatedAt.Format("2006-01-02_15:04:05")
-	name := fmt.Sprintf("%s_%s", app, timeStr)
+	timeStr := appModel.PackageUpdatedAt.Format("20060102150405")
+	name := fmt.Sprintf("%s-%s", app, timeStr)
 	return name, nil
 }
 

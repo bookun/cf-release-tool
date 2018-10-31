@@ -38,7 +38,7 @@ func (m *Manager) Init(materialDir, branch, org, space string) error {
 // GreenPush push newApp and map-route to the app.
 // This method is called if there is app you want to deploy in your cloudfoundry space.
 func (m *Manager) GreenPush(app, manifestFile, domain, host string) (string, error) {
-	newApp := app + "_green"
+	newApp := app + "-green"
 	if err := m.client.Push(newApp, manifestFile); err != nil {
 		return "", err
 	}
