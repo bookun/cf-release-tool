@@ -22,6 +22,9 @@ type Plug struct {
 // Run is exectuted for the first time
 // This Method is implements about Run method in code.cloudfoundry.org/cli/plugin
 func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
+	if args[0] == "CLI-MESSAGE-UNINSTALL" {
+		return
+	}
 
 	releaseFlagSet := flag.NewFlagSet("release", flag.ExitOnError)
 	manifestFile := releaseFlagSet.String("f", "manifest.yml", "The app will be released based on this manifest file")
@@ -31,8 +34,8 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	//client := client.NewDummyClient(os.Stdout)
-	client := client.NewClient(cliConnection)
+	client := client.NewDummyClient(os.Stdout)
+	//client := client.NewClient(cliConnection)
 	manager := manager.NewManager(client)
 	inputPort := usecase.NewUsecase(manager)
 	ctl := &controller.Controller{
