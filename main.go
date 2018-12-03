@@ -34,8 +34,8 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	client := client.NewDummyClient(os.Stdout)
-	//client := client.NewClient(cliConnection)
+	//client := client.NewDummyClient(os.Stdout)
+	client := client.NewClient(cliConnection)
 	manager := manager.NewManager(client)
 	inputPort := usecase.NewUsecase(manager)
 	ctl := &controller.Controller{
