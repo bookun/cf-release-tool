@@ -16,4 +16,5 @@ applications:
     HOST: front-kutuzawa
     DOMAIN: ms10.cf001.goo.ne.jp
     MATERIAL: ./.bp-config.front
+    ENVFILE: .env.dev
 
