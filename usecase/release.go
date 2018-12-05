@@ -1,6 +1,8 @@
 package usecase
 
-import "github.com/bookun/cf-release-tool/entity"
+import (
+	"github.com/bookun/cf-release-tool/entity"
+)
 
 // CfManager is aggregation of methods.
 // Each methods is implemented in manager package.
