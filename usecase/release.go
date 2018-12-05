@@ -5,7 +5,7 @@ import "github.com/bookun/cf-release-tool/entity"
 // CfManager is aggregation of methods.
 // Each methods is implemented in manager package.
 type CfManager interface {
-	Init(materialDir, branch, org, space string) error
+	Init(envFile, materialDir, branch, org, space string) error
 	GreenPush(app, manifestFile, domain, host string) (string, error)
 	Push(app, manifestFile, domain, host string) error
 	Exchange(app, blueApp string) (string, error)
@@ -35,7 +35,7 @@ func NewUsecase(manager CfManager) *Usecase {
 // Then, it exchanges name between green app and one that already deployed (blue app).
 // Finally, it deletes blue app.
 func (u *Usecase) BlueGreenDeployment(entity entity.Deploy, domain, host string) error {
-	if err := u.client.Init(entity.MaterialDir, entity.Branch, entity.Org, entity.Space); err != nil {
+	if err := u.client.Init(entity.EnvFile, entity.MaterialDir, entity.Branch, entity.Org, entity.Space); err != nil {
 		return err
 	}
 	greenApp, err := u.client.GreenPush(entity.App, entity.ManifestFile, domain, host)
@@ -55,7 +55,7 @@ func (u *Usecase) BlueGreenDeployment(entity entity.Deploy, domain, host string)
 
 // Deployment executes deploy an app.
 func (u *Usecase) Deployment(entity entity.Deploy, domain, host string) error {
-	if err := u.client.Init(entity.MaterialDir, entity.Branch, entity.Org, entity.Space); err != nil {
+	if err := u.client.Init(entity.EnvFile, entity.MaterialDir, entity.Branch, entity.Org, entity.Space); err != nil {
 		return err
 	}
 	if err := u.client.Push(entity.App, entity.ManifestFile, domain, host); err != nil {

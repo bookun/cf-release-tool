@@ -22,7 +22,10 @@ func NewClient(cc plugin.CliConnection) *Client {
 }
 
 // Init prepare material, git branch, and cf target.
-func (c *Client) Init(materialDir, branch, org, space string) error {
+func (c *Client) Init(envFile, materialDir, branch, org, space string) error {
+	if envFile != "" {
+		exec.Command("cp", envFile, ".env")
+	}
 	exec.Command("rm", "-rf", "./.bp-config").Run()
 	if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
 		return err

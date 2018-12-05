@@ -5,7 +5,7 @@ import "errors"
 // Client has aggregation of methods.
 // These methods are implemented in client package.
 type Client interface {
-	Init(materialDir, branch, org, space string) error
+	Init(envFile, materialDir, branch, org, space string) error
 	Push(app, baseApp string) error
 	Rename(from, to string) error
 	Delete(app string) error
@@ -28,8 +28,8 @@ func NewManager(client Client) *Manager {
 }
 
 // Init call client.Init
-func (m *Manager) Init(materialDir, branch, org, space string) error {
-	if err := m.client.Init(materialDir, branch, org, space); err != nil {
+func (m *Manager) Init(envFile, materialDir, branch, org, space string) error {
+	if err := m.client.Init(envFile, materialDir, branch, org, space); err != nil {
 		return err
 	}
 	return nil

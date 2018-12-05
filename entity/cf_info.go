@@ -1,6 +1,6 @@
 package entity
 
-// CfInfo is the struct implementing the interface defined by the core CLI. It can
+// Deploy is the struct implementing the interface defined by the core CLI. It can
 // be found at  "code.cloudfoundry.org/cli/plugin/plugin.go"
 type Deploy struct {
 	Org          string
@@ -9,4 +9,5 @@ type Deploy struct {
 	ManifestFile string
 	MaterialDir  string
 	Branch       string
+	EnvFile      string
 }

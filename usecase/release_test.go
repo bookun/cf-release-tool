@@ -10,7 +10,6 @@ import (
 	"github.com/bookun/cf-release-tool/client"
 	"github.com/bookun/cf-release-tool/entity"
 	"github.com/bookun/cf-release-tool/manager"
-	"github.com/k0kubun/pp"
 )
 
 const (
@@ -20,7 +19,7 @@ const (
 
 type MockManager struct{}
 
-func (m *MockManager) Init(materialDir, branch, org, space string) error {
+func (m *MockManager) Init(envFile, materialDir, branch, org, space string) error {
 	return errors.New("Init error")
 }
 func (m *MockManager) GreenPush(app, manifestFile, domain, host string) (string, error) {
@@ -59,7 +58,7 @@ func TestBlueGreenDeployment(t *testing.T) {
 		expectErr error
 	}{
 		{"success", usecase1, nil},
-		{"failed", usecase2, nil},
+		{"failed", usecase2, errors.New("Init error")},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -72,8 +71,8 @@ func TestBlueGreenDeployment(t *testing.T) {
 					}
 				} else {
 					if buf.String() != bufExpected.String() {
-						pp.Println(bufExpected.String())
-						pp.Println(buf.String())
+						//pp.Println(bufExpected.String())
+						//pp.Println(buf.String())
 						t.Errorf(
 							"want BlueGreenDeployment() = %v, got %v",
 							bufExpected.String(), buf.String())
@@ -92,10 +91,12 @@ func writeBlueGreenDeployment(writer io.Writer, entity entity.Deploy) {
 	fmt.Fprintf(writer, "git checkout %s\n", entity.Branch)
 	fmt.Fprintf(writer, "git pull origin %s\n", entity.Branch)
 	fmt.Fprintf(writer, "target -o %s -s %s\n", entity.Org, entity.Space)
-	fmt.Fprintf(writer, "push %s -f %s\n", entity.App+"_green", entity.ManifestFile)
-	fmt.Fprintf(writer, "map-route %s %s --hostname %s\n", entity.App+"_green", domain, host)
-	fmt.Fprintf(writer, "rename %s to %s\n", entity.App, entity.App+"_blue")
-	fmt.Fprintf(writer, "rename %s to %s\n", entity.App+"_green", entity.App)
-	fmt.Fprintf(writer, "unmap-route %s %s --hostname %s\n", entity.App+"_blue", domain, host)
-	fmt.Fprintf(writer, "delete %s\n", entity.App+"_blue")
+	fmt.Fprintf(writer, "push %s -f %s\n", entity.App+"-green", entity.ManifestFile)
+	fmt.Fprintf(writer, "test-%s-111\n", entity.App+"-green")
+	fmt.Fprintf(writer, "unmap-route %s --hostname test-%s-111\n", entity.App+"_green", entity.App+"-green")
+	fmt.Fprintf(writer, "map-route %s %s --hostname %s\n", entity.App+"-green", domain, host)
+	fmt.Fprintf(writer, "rename %s to %s\n", entity.App, entity.App+"-blue")
+	fmt.Fprintf(writer, "rename %s to %s\n", entity.App+"-green", entity.App)
+	fmt.Fprintf(writer, "unmap-route %s %s --hostname %s\n", entity.App+"-blue", domain, host)
+	fmt.Fprintf(writer, "delete %s\n", entity.App+"-blue")
 }

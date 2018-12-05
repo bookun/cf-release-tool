@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 )
 
@@ -21,7 +20,10 @@ func NewDummyClient(output io.Writer) *DummyClient {
 }
 
 // Init is mock about Init in client.go
-func (c *DummyClient) Init(materialDir, branch, org, space string) error {
+func (c *DummyClient) Init(envFile, materialDir, branch, org, space string) error {
+	if envFile != "" {
+		fmt.Fprintf(c.Output, "cp %s .env", envFile)
+	}
 	fmt.Fprintf(c.Output, "rm -fr ./.bp-config\n")
 	fmt.Fprintf(c.Output, "cp -r %s ./.bp-config\n", materialDir)
 	fmt.Fprintf(c.Output, "git checkout %s\n", branch)
@@ -71,8 +73,8 @@ func (c *DummyClient) UnMapRoute(app, domain, host string) error {
 // TestUp execute map-route test host
 func (c *DummyClient) TestUp(app, domain string) (bool, error) {
 	var confirm string
-	tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
-	fmt.Fprintf(c.Output, "test-%s-%s\n", app, strconv.FormatInt(time.Now().Unix(), 10))
+	tempHost := fmt.Sprintf("test-%s-111", app)
+	fmt.Fprintf(c.Output, "test-%s-111\n", app)
 	if err := c.MapRoute(app, domain, tempHost); err != nil {
 		return false, err
 	}

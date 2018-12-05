@@ -41,6 +41,7 @@ type Manifest struct {
 			Host     string `yaml:"HOST"`
 			Domain   string `yaml:"DOMAIN"`
 			Material string `yaml:"MATERIAL"`
+			EnvFile  string `yaml:"ENVFILE"`
 		} `yaml:"env"`
 	} `yaml:"applications"`
 }
@@ -70,6 +71,7 @@ func (c *Controller) Release() error {
 			ManifestFile: c.ManifestFile,
 			MaterialDir:  targetApp.Env.Material,
 			Branch:       c.Branch,
+			EnvFile:      targetApp.Env.EnvFile,
 		}
 		if c.InfoGetter.AppExists(entity.App) != nil {
 			if err := c.InputPort.Deployment(entity, domain, host); err != nil {
