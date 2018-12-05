@@ -3,7 +3,9 @@ package client
 import (
 	"fmt"
 	"os/exec"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry/cli/plugin"
@@ -60,8 +62,23 @@ func (c *Client) Rename(oldApp, newApp string) error {
 
 // Delete executes cf delete
 func (c *Client) Delete(app string) error {
-	if _, err := c.cc.CliCommand("delete", app); err != nil {
+	apps, err := c.cc.GetApps()
+	var appNames []string
+	if err != nil {
 		return err
+	}
+	for _, v := range apps {
+		if strings.Contains(v.Name, app) && v.Name != app {
+			appNames = append(appNames, v.Name)
+		}
+	}
+	if len(appNames) > 3 {
+		sort.Strings(appNames)
+		for _, v := range appNames[3:] {
+			if _, err := c.cc.CliCommand("delete", v); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -94,6 +111,14 @@ func (c *Client) UnMapRoute(app, domain, host string) error {
 	return nil
 }
 
+// DeleteRoute execute cf delete-route
+func (c *Client) DeleteRoute(domain, host string) error {
+	if _, err := c.cc.CliCommand("delete-route", "-f", domain, "-n", host); err != nil {
+		return err
+	}
+	return nil
+}
+
 // TestUp execute map-route test host
 func (c *Client) TestUp(app, domain string) (bool, error) {
 	var confirm string
@@ -105,6 +130,9 @@ func (c *Client) TestUp(app, domain string) (bool, error) {
 	fmt.Scan(&confirm)
 	if confirm == "y" {
 		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+			return false, err
+		}
+		if err := c.DeleteRoute(domain, tempHost); err != nil {
 			return false, err
 		}
 		return true, nil
