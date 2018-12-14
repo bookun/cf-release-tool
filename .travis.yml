@@ -5,6 +5,9 @@ env:
 language: go
 go:
   - 1.10.x
+dist: trusty
+sudo: false
+
 before_install:
   - go get -u github.com/golang/dep/cmd/dep
   - go get -v github.com/codeclimate/test-reporter
@@ -13,6 +16,7 @@ install:
 before_script:
   - test-reporter before-build
 script:
-  - go test -coverprofile c.out ./...
+  - env GO111MODULE=on go build
+  - env GO111MODULE=on go test -coverprofile c.out ./...
 after_script:
   - test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
