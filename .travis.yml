@@ -11,8 +11,6 @@ sudo: false
 before_install:
   - go get -u github.com/golang/dep/cmd/dep
   - go get -v github.com/codeclimate/test-reporter
-install:
-  - $GOPATH/bin/dep ensure
 before_script:
   - test-reporter before-build
 script:
