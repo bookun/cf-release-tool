@@ -44,6 +44,12 @@ func (c *DummyClient) Rename(oldApp, newApp string) error {
 	return nil
 }
 
+// Stop is mock about Stop in client.go
+func (c *DummyClient) Stop(app string) error {
+	fmt.Fprintf(c.Output, "stop %s", app)
+	return nil
+}
+
 // Delete is mock about Delete in client.go
 func (c *DummyClient) Delete(app string) error {
 	fmt.Fprintf(c.Output, "delete %s\n", app)
@@ -79,7 +85,7 @@ func (c *DummyClient) TestUp(app, domain string) (bool, error) {
 		return false, err
 	}
 	fmt.Printf("Is it displayed properly? [y/n]")
-	fmt.Scan(&confirm)
+	confirm = "y"
 	if confirm == "y" {
 		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
 			return false, err
