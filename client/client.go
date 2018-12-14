@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"sort"
 	"strconv"
@@ -28,7 +29,9 @@ func (c *Client) Init(envFile, materialDir, branch, org, space string) error {
 	if envFile != "" {
 		exec.Command("cp", envFile, "./.env").Run()
 	}
-	exec.Command("rm", "-rf", "./.bp-config").Run()
+	if _, err := os.Stat("./.bp-config"); err != nil {
+		exec.Command("rm", "-rf", "./.bp-config").Run()
+	}
 	if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
 		return err
 	}
@@ -60,6 +63,14 @@ func (c *Client) Rename(oldApp, newApp string) error {
 	return nil
 }
 
+// Stop executes cf stop
+func (c *Client) Stop(app string) error {
+	if _, err := c.cc.CliCommand("stop", app); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Delete executes cf delete
 func (c *Client) Delete(app string) error {
 	apps, err := c.cc.GetApps()
@@ -74,7 +85,7 @@ func (c *Client) Delete(app string) error {
 	}
 	if len(appNames) > 3 {
 		sort.Strings(appNames)
-		for _, v := range appNames[3:] {
+		for _, v := range appNames[:len(appNames)-3] {
 			if _, err := c.cc.CliCommand("delete", v); err != nil {
 				return err
 			}

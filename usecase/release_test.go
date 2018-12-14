@@ -66,7 +66,7 @@ func TestBlueGreenDeployment(t *testing.T) {
 				if c.expectErr != nil {
 					if c.expectErr.Error() != actual.Error() {
 						t.Errorf(
-							"want BlueGreenDeployment() = %v, got %v",
+							"want BlueGreenDeployment() = %v,\n got %v\n",
 							c.expectErr, actual)
 					}
 				} else {
@@ -74,7 +74,7 @@ func TestBlueGreenDeployment(t *testing.T) {
 						//pp.Println(bufExpected.String())
 						//pp.Println(buf.String())
 						t.Errorf(
-							"want BlueGreenDeployment() = %v, got %v",
+							"want BlueGreenDeployment() = %v,\n got %v\n",
 							bufExpected.String(), buf.String())
 					}
 				}
