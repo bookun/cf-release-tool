@@ -6,7 +6,7 @@ language: go
 go:
   - 1.10.x
 before_install:
-  - go get github.com/golang/dep/...
+  - go get -u github.com/golang/dep/cmd/dep
   - go get -v github.com/codeclimate/test-reporter
 install:
   - $GOPATH/bin/dep ensure
