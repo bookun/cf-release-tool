@@ -8,7 +8,9 @@ go:
   - 1.11.x
 
 before_install:
-  - go get -v github.com/codeclimate/test-reporter
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 install: true
 
 before_script:
