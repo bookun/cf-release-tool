@@ -1,19 +1,19 @@
 env:
   global:
     - CC_TEST_REPORTER_ID=$CC_TEST_REPORTER_ID
+    - GO111MODULE=on
 
 language: go
 go:
-  - 1.10.x
-dist: trusty
-sudo: false
+  - 1.11.x
 
 before_install:
   - go get -v github.com/codeclimate/test-reporter
+install: true
+
 before_script:
   - test-reporter before-build
 script:
-  - GO111MODULE=on go build
-  - GO111MODULE=on go test -coverprofile c.out ./...
+  - go test -coverprofile c.out ./...
 after_script:
   - test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
