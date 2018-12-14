@@ -11,6 +11,7 @@ type Client interface {
 	Init(envFile, materialDir, branch, org, space string) error
 	Push(app, baseApp string) error
 	Rename(from, to string) error
+	Stop(app string) error
 	Delete(app string) error
 	MapRoute(app, domain, host string) error
 	UnMapRoute(app, domain, host string) error
@@ -90,6 +91,9 @@ func (m *Manager) Exchange(app, blueApp string) (string, error) {
 // BlueDelete delete old app.
 func (m *Manager) BlueDelete(app, domain, host string) error {
 	if err := m.client.UnMapRoute(app, domain, host); err != nil {
+		return err
+	}
+	if err := m.client.Stop(app); err != nil {
 		return err
 	}
 	// TODO: 本当はここで商用にエラーが多発してないかとかチェックしたい
