@@ -17,6 +17,7 @@ type Plug struct {
 	file   *string
 	branch *string
 	host   *string
+	force  *bool
 }
 
 // Run is exectuted for the first time
@@ -30,12 +31,13 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 	manifestFile := releaseFlagSet.String("f", "manifest.yml", "The app will be released based on this manifest file")
 	branch := releaseFlagSet.String("b", "master", "An app is released by using this branch")
 	host := releaseFlagSet.String("n", "", "An app is released with hostname")
+	force := releaseFlagSet.Bool("y", false, "Anser yes for all question")
 	if err := releaseFlagSet.Parse(args[1:]); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	//client := client.NewDummyClient(os.Stdout)
-	client := client.NewClient(cliConnection)
+	client := client.NewClient(cliConnection, *force)
 	manager := manager.NewManager(client)
 	inputPort := usecase.NewUsecase(manager)
 	ctl := &controller.Controller{
@@ -66,8 +68,9 @@ func (c *Plug) GetMetadata() plugin.PluginMetadata {
 				Name:     "release",
 				HelpText: "This plugin executes BlueGreenDeployment for PHP app based on git branch. use --help",
 				UsageDetails: plugin.Usage{
-					Usage: "release front or tool App\n	cf release [-f] <manifest file>  [-b] <branch> [-n] <hostname>",
+					Usage: "release front or tool App\n	cf release [-y] [-f] <manifest file>  [-b] <branch> [-n] <hostname>",
 					Options: map[string]string{
+						"y":        "answer yes for all questions",
 						"file":     "input manifest file's path",
 						"branch":   "input git branch name that you will release",
 						"hostname": "input hostname",

@@ -14,13 +14,15 @@ import (
 
 // Client operates cloudfoundry API.
 type Client struct {
-	cc plugin.CliConnection
+	cc    plugin.CliConnection
+	force bool
 }
 
 // NewClient init Client
-func NewClient(cc plugin.CliConnection) *Client {
+func NewClient(cc plugin.CliConnection, force bool) *Client {
 	return &Client{
-		cc: cc,
+		cc:    cc,
+		force: force,
 	}
 }
 
@@ -86,8 +88,14 @@ func (c *Client) Delete(app string) error {
 	if len(appNames) > 3 {
 		sort.Strings(appNames)
 		for _, v := range appNames[:len(appNames)-3] {
-			if _, err := c.cc.CliCommand("delete", v); err != nil {
-				return err
+			if c.force {
+				if _, err := c.cc.CliCommand("delete", "-f", v); err != nil {
+					return err
+				}
+			} else {
+				if _, err := c.cc.CliCommand("delete", v); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -137,8 +145,12 @@ func (c *Client) TestUp(app, domain string) (bool, error) {
 	if err := c.MapRoute(app, domain, tempHost); err != nil {
 		return false, err
 	}
-	fmt.Printf("Is it displayed properly? [y/n]")
-	fmt.Scan(&confirm)
+	if !c.force {
+		fmt.Printf("Is it displayed properly? [y/n]")
+		fmt.Scan(&confirm)
+	} else {
+		confirm = "y"
+	}
 	if confirm == "y" {
 		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
 			return false, err
