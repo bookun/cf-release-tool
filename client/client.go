@@ -32,15 +32,21 @@ func (c *Client) Init(envFile, materialDir, branch, org, space string) error {
 		exec.Command("cp", envFile, "./.env").Run()
 	}
 	if _, err := os.Stat("./.bp-config"); err == nil {
-		exec.Command("rm", "-rf", "./.bp-config").Run()
+		if err := exec.Command("rm", "-rf", "./.bp-config").Run(); err != nil {
+			err = fmt.Errorf("failed to remove a default bp-config directory")
+			return err
+		}
 	}
 	if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
+		err = fmt.Errorf("failed to copy from %s to .bp-config", materialDir)
 		return err
 	}
 	if err := exec.Command("git", "checkout", branch).Run(); err != nil {
+		err = fmt.Errorf("failed to checkout branch")
 		return err
 	}
 	if err := exec.Command("git", "pull", "origin", branch).Run(); err != nil {
+		err = fmt.Errorf("failed to pull branch")
 		return err
 	}
 	if _, err := c.cc.CliCommand("target", "-o", org, "-s", space); err != nil {
