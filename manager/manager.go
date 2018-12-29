@@ -8,13 +8,13 @@ import (
 // Client has aggregation of methods.
 // These methods are implemented in client package.
 type Client interface {
-	Init(envFile, materialDir, branch, org, space string) error
+	Init(copyTargets map[string]string, branch, org, space string) error
 	Push(app, baseApp string) error
 	Rename(from, to string) error
 	Stop(app string) error
 	Delete(app string) error
 	MapRoute(app, domain, host string) error
-	UnMapRoute(app, domain, host string) error
+	UnMapRoute(app string) error
 	TestUp(app, domain string) (bool, error)
 	CreateBlueName(app string) (string, error)
 }
@@ -32,8 +32,8 @@ func NewManager(client Client) *Manager {
 }
 
 // Init call client.Init
-func (m *Manager) Init(envFile, materialDir, branch, org, space string) error {
-	if err := m.client.Init(envFile, materialDir, branch, org, space); err != nil {
+func (m *Manager) Init(copyTargets map[string]string, branch, org, space string) error {
+	if err := m.client.Init(copyTargets, branch, org, space); err != nil {
 		return err
 	}
 	return nil
@@ -90,7 +90,7 @@ func (m *Manager) Exchange(app, blueApp string) (string, error) {
 
 // BlueDelete delete old app.
 func (m *Manager) BlueDelete(app, domain, host string) error {
-	if err := m.client.UnMapRoute(app, domain, host); err != nil {
+	if err := m.client.UnMapRoute(app); err != nil {
 		return err
 	}
 	if err := m.client.Stop(app); err != nil {

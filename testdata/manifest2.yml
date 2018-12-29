@@ -12,7 +12,3 @@ applications:
     # essential 
     ORG: testOrg
     SPACE: bookun
-    HOST: host-bookun
-    DOMAIN: test-domain
-    MATERIAL: ./.bp-config.bookun
-

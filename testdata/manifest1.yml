@@ -6,13 +6,16 @@ applications:
   buildpack: hoge
   no-hostname: true
   no-route: true
+  host: host-bookun
+  domain: domain-bookun
   env:
     TZ: Asia/Tokyo
     LANG: ja_JP.UTF-8
     # essential 
     ORG: testOrg
     SPACE: bookun
-    HOST: host-bookun
-    DOMAIN: test-domain
-    MATERIAL: ./.bp-config.bookun
+    COPY: 
+      ./.bp-config.bookun: ./.bp-config
+      ./.env.dev: ./.env
+      
 

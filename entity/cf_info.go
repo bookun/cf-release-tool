@@ -7,7 +7,6 @@ type Deploy struct {
 	Space        string
 	App          string
 	ManifestFile string
-	MaterialDir  string
 	Branch       string
-	EnvFile      string
+	CopyTargets  map[string]string
 }

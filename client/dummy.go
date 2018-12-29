@@ -20,12 +20,12 @@ func NewDummyClient(output io.Writer) *DummyClient {
 }
 
 // Init is mock about Init in client.go
-func (c *DummyClient) Init(envFile, materialDir, branch, org, space string) error {
-	if envFile != "" {
-		fmt.Fprintf(c.Output, "cp %s .env", envFile)
-	}
+func (c *DummyClient) Init(copyTarget map[string]string, branch, org, space string) error {
+	//if envFile != "" {
+	//	fmt.Fprintf(c.Output, "cp %s .env", envFile)
+	//}
 	fmt.Fprintf(c.Output, "rm -fr ./.bp-config\n")
-	fmt.Fprintf(c.Output, "cp -r %s ./.bp-config\n", materialDir)
+	//fmt.Fprintf(c.Output, "cp -r %s ./.bp-config\n", materialDir)
 	fmt.Fprintf(c.Output, "git checkout %s\n", branch)
 	fmt.Fprintf(c.Output, "git pull origin %s\n", branch)
 	fmt.Fprintf(c.Output, "target -o %s -s %s\n", org, space)
@@ -67,12 +67,7 @@ func (c *DummyClient) MapRoute(app, domain, host string) error {
 }
 
 // UnMapRoute is mock about UnMapRoute in client.go
-func (c *DummyClient) UnMapRoute(app, domain, host string) error {
-	if host != "" {
-		fmt.Fprintf(c.Output, "unmap-route %s %s --hostname %s\n", app, domain, host)
-	} else {
-		fmt.Fprintf(c.Output, "unmap-route %s %s\n", app, domain)
-	}
+func (c *DummyClient) UnMapRoute(app string) error {
 	return nil
 }
 
@@ -87,12 +82,12 @@ func (c *DummyClient) TestUp(app, domain string) (bool, error) {
 	fmt.Printf("Is it displayed properly? [y/n]")
 	confirm = "y"
 	if confirm == "y" {
-		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+		if err := c.UnMapRoute(app); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
-	if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+	if err := c.UnMapRoute(app); err != nil {
 		return false, err
 	}
 	if err := c.Delete(app); err != nil {

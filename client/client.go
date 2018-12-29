@@ -27,27 +27,41 @@ func NewClient(cc plugin.CliConnection, force bool) *Client {
 }
 
 // Init prepare material, git branch, and cf target.
-func (c *Client) Init(envFile, materialDir, branch, org, space string) error {
-	if envFile != "" {
-		exec.Command("cp", envFile, "./.env").Run()
-	}
-	if _, err := os.Stat("./.bp-config"); err == nil {
-		if err := exec.Command("rm", "-rf", "./.bp-config").Run(); err != nil {
-			err = fmt.Errorf("failed to remove a default bp-config directory")
+func (c *Client) Init(copyTargets map[string]string, branch, org, space string) error {
+	//if envFile != "" {
+	//	exec.Command("cp", envFile, "./.env").Run()
+	//}
+	//if _, err := os.Stat("./.bp-config"); err == nil {
+	//	if err := exec.Command("rm", "-rf", "./.bp-config").Run(); err != nil {
+	//		err = fmt.Errorf("failed to remove a default bp-config directory")
+	//		return err
+	//	}
+	//}
+	//if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
+	//	err = fmt.Errorf("failed to copy from %s to .bp-config", materialDir)
+	//	return err
+	//}
+	for from, to := range copyTargets {
+		if _, err := os.Stat(to); err == nil {
+			if err := exec.Command("rm", "-fr", to).Run(); err != nil {
+				err = fmt.Errorf("failed to remove %s before copy", to)
+				return err
+			}
+		}
+		if err := exec.Command("cp", "-fr", from, to).Run(); err != nil {
+			err = fmt.Errorf("failed to copy from %s to %s", from, to)
 			return err
 		}
 	}
-	if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
-		err = fmt.Errorf("failed to copy from %s to .bp-config", materialDir)
-		return err
-	}
-	if err := exec.Command("git", "checkout", branch).Run(); err != nil {
-		err = fmt.Errorf("failed to checkout branch")
-		return err
-	}
-	if err := exec.Command("git", "pull", "origin", branch).Run(); err != nil {
-		err = fmt.Errorf("failed to pull branch")
-		return err
+	if branch != "" {
+		if err := exec.Command("git", "checkout", branch).Run(); err != nil {
+			err = fmt.Errorf("failed to checkout branch")
+			return err
+		}
+		if err := exec.Command("git", "pull", "origin", branch).Run(); err != nil {
+			err = fmt.Errorf("failed to pull branch")
+			return err
+		}
 	}
 	if _, err := c.cc.CliCommand("target", "-o", org, "-s", space); err != nil {
 		return err
@@ -110,27 +124,39 @@ func (c *Client) Delete(app string) error {
 
 // MapRoute executes cf map-route
 func (c *Client) MapRoute(app, domain, host string) error {
-	if host != "" {
-		if _, err := c.cc.CliCommand("map-route", app, domain, "--hostname", host); err != nil {
-			return err
-		}
-	} else {
-		if _, err := c.cc.CliCommand("map-route", app, domain); err != nil {
-			return err
+	if domain != "" {
+		if host != "" {
+			if _, err := c.cc.CliCommand("map-route", app, domain, "--hostname", host); err != nil {
+				return err
+			}
+		} else {
+			if _, err := c.cc.CliCommand("map-route", app, domain); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
 // UnMapRoute executes cf unmap-route
-func (c *Client) UnMapRoute(app, domain, host string) error {
-	if host != "" {
-		if _, err := c.cc.CliCommand("unmap-route", app, domain, "--hostname", host); err != nil {
-			return err
-		}
-	} else {
-		if _, err := c.cc.CliCommand("unmap-route", app, domain); err != nil {
-			return err
+func (c *Client) UnMapRoute(app string) error {
+	appInfo, err := c.cc.GetApp(app)
+	if err != nil {
+		return err
+	}
+	for _, route := range appInfo.Routes {
+		domain := route.Domain.Name
+		host := route.Host
+		if domain != "" {
+			if host != "" {
+				if _, err := c.cc.CliCommand("unmap-route", app, domain, "--hostname", host); err != nil {
+					return err
+				}
+			} else {
+				if _, err := c.cc.CliCommand("unmap-route", app, domain); err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
@@ -146,33 +172,34 @@ func (c *Client) DeleteRoute(domain, host string) error {
 
 // TestUp execute map-route test host
 func (c *Client) TestUp(app, domain string) (bool, error) {
-	var confirm string
-	tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
-	if err := c.MapRoute(app, domain, tempHost); err != nil {
-		return false, err
-	}
 	if !c.force {
+		var confirm string
+		tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
+		if err := c.MapRoute(app, domain, tempHost); err != nil {
+			return false, err
+		}
 		fmt.Printf("Is it displayed properly? [y/n]")
-		fmt.Scan(&confirm)
-	} else {
-		confirm = "y"
-	}
-	if confirm == "y" {
-		if err := c.UnMapRoute(app, domain, tempHost); err != nil {
+		if _, err := fmt.Scan(&confirm); err != nil {
 			return false, err
 		}
-		if err := c.DeleteRoute(domain, tempHost); err != nil {
+		if confirm == "y" {
+			if err := c.UnMapRoute(app); err != nil {
+				return false, err
+			}
+			if err := c.DeleteRoute(domain, tempHost); err != nil {
+				return false, err
+			}
+			return true, nil
+		}
+		if err := c.UnMapRoute(app); err != nil {
 			return false, err
 		}
-		return true, nil
+		if err := c.Delete(app); err != nil {
+			return false, err
+		}
+		return false, nil
 	}
-	if err := c.UnMapRoute(app, domain, tempHost); err != nil {
-		return false, err
-	}
-	if err := c.Delete(app); err != nil {
-		return false, err
-	}
-	return false, nil
+	return true, nil
 }
 
 // CreateBlueName execute naming.

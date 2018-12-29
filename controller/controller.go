@@ -2,11 +2,10 @@ package controller
 
 import (
 	"errors"
-	"io/ioutil"
-
 	"github.com/bookun/cf-release-tool/entity"
 	"github.com/bookun/cf-release-tool/usecase"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 // CurrentInfoGetter interface has AppExists method.
@@ -33,15 +32,14 @@ type Manifest struct {
 		Buildpack  string `yaml:"buildpack"`
 		NoHostName bool   `yaml:"no-hostname"`
 		NoRoute    bool   `yaml:"no-route"`
+		Host       string `yaml:"host"`
+		Domain     string `yaml:"domain"`
 		Env        struct {
-			Org      string `yaml:"ORG"`
-			Space    string `yaml:"SPACE"`
-			TimeZone string `yaml:"TZ"`
-			Lang     string `yaml:"LANG"`
-			Host     string `yaml:"HOST"`
-			Domain   string `yaml:"DOMAIN"`
-			Material string `yaml:"MATERIAL"`
-			EnvFile  string `yaml:"ENVFILE"`
+			Org      string            `yaml:"ORG"`
+			Space    string            `yaml:"SPACE"`
+			TimeZone string            `yaml:"TZ"`
+			Lang     string            `yaml:"LANG"`
+			Copy     map[string]string `yaml:"COPY"`
 		} `yaml:"env"`
 	} `yaml:"applications"`
 }
@@ -56,12 +54,12 @@ func (c *Controller) Release() error {
 	}
 	targetApps := m.Applications
 	for _, targetApp := range targetApps {
-		domain := targetApp.Env.Domain
-		host := targetApp.Env.Host
+		domain := targetApp.Domain
+		host := targetApp.Host
 		if len(targetApps) == 1 {
 			host, err = c.getHostName()
 			if err != nil {
-				host = targetApp.Env.Host
+				host = targetApp.Host
 			}
 		}
 		entity := entity.Deploy{
@@ -69,9 +67,8 @@ func (c *Controller) Release() error {
 			Space:        targetApp.Env.Space,
 			App:          targetApp.Name,
 			ManifestFile: c.ManifestFile,
-			MaterialDir:  targetApp.Env.Material,
 			Branch:       c.Branch,
-			EnvFile:      targetApp.Env.EnvFile,
+			CopyTargets:  targetApp.Env.Copy,
 		}
 		if c.InfoGetter.AppExists(entity.App) != nil {
 			if err := c.InputPort.Deployment(entity, domain, host); err != nil {
