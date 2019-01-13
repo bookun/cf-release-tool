@@ -116,13 +116,17 @@ func (c *Client) MapRoute(name string) error {
 	confirmFlag := false
 	domain := c.app.Domain
 	host := c.app.Host
-	if name != c.app.Name {
-		host = name
-		confirmFlag = true
-	}
 	if domain == "" {
 		err := fmt.Errorf("domain is not be set")
 		return err
+	}
+	if name != c.app.Name {
+		host = name
+		confirmFlag = true
+		if c.app.Env.TestUp != nil {
+			domain = c.app.Env.TestUp["domain"]
+			host = c.app.Env.TestUp["host"]
+		}
 	}
 	if host == "" {
 		if _, err := c.cc.CliCommand("map-route", name, domain); err != nil {
@@ -131,11 +135,7 @@ func (c *Client) MapRoute(name string) error {
 		return nil
 	}
 	if _, err := c.cc.CliCommand("map-route", name, domain, "--hostname", host); err != nil {
-		testDomain := c.app.Env.TestUp["domain"]
-		testHost := c.app.Env.TestUp["host"]
-		if _, err := c.cc.CliCommand("map-route", name, testDomain, "--hostname", testHost); err != nil {
-			return err
-		}
+		return err
 	}
 	if confirmFlag {
 		if err := c.confirm(); err != nil {
