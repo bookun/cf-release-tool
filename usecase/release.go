@@ -12,6 +12,7 @@ type CfClient interface {
 	DeleteApps(app string) error
 	MapRoute(app string) error
 	UnMapRoute(app string) error
+	//DeleteRoute(app string) error
 	//TestUp(app, domain string) (bool, error)
 	CreateBlueName(app string) (string, error)
 }
@@ -25,14 +26,14 @@ type InputPort interface {
 // Usecase has CFManeger
 type Usecase struct {
 	appName string
-	client CfClient
+	client  CfClient
 }
 
 // NewUsecase init Usecase.
 func NewUsecase(appName string, client CfClient) *Usecase {
 	return &Usecase{
-		appName:appName,
-		client: client,
+		appName: appName,
+		client:  client,
 	}
 }
 
@@ -44,7 +45,7 @@ func (u *Usecase) BlueGreenDeployment() error {
 	if err := u.client.Init(); err != nil {
 		return err
 	}
-	greenAppName := "green-"+u.appName
+	greenAppName := u.appName + "-green"
 	blueAppName, err := u.client.CreateBlueName(u.appName)
 	if err != nil {
 		return err

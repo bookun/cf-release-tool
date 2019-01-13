@@ -149,25 +149,29 @@ func (c *Client) UnMapRoute(app string) error {
 	for _, route := range appInfo.Routes {
 		domain := route.Domain.Name
 		host := route.Host
-		if domain != "" {
-			if host != "" {
-				if _, err := c.cc.CliCommand("unmap-route", app, domain, "--hostname", host); err != nil {
-					return err
-				}
-			} else {
-				if _, err := c.cc.CliCommand("unmap-route", app, domain); err != nil {
+		if domain == "" {
+			err := fmt.Errorf("the domain is not be set")
+			return err
+		}
+		if host != "" {
+			if _, err := c.cc.CliCommand("unmap-route", app, domain, "--hostname", host); err != nil {
+				return err
+			}
+			if app != c.app.Name {
+				if _, err := c.cc.CliCommand("delete-route", domain, "--hotname", host); err != nil {
 					return err
 				}
 			}
+			return nil
 		}
-	}
-	return nil
-}
-
-// DeleteRoute execute cf delete-route
-func (c *Client) DeleteRoute(domain, host string) error {
-	if _, err := c.cc.CliCommand("delete-route", "-f", domain, "-n", host); err != nil {
-		return err
+		if _, err := c.cc.CliCommand("unmap-route", app, domain); err != nil {
+			return err
+		}
+		if app != c.app.Name {
+			if _, err := c.cc.CliCommand("delete-route", domain); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -217,6 +221,10 @@ func (c *Client) confirm() error {
 	var confirm string
 	fmt.Printf("Is it displayed properly? [y/n]")
 	if _, err := fmt.Scan(&confirm); err != nil {
+		return err
+	}
+	if confirm != "y" {
+		err := fmt.Errorf("deploy is cenceled by you")
 		return err
 	}
 	return nil

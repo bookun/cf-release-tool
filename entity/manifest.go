@@ -24,11 +24,11 @@ type App struct {
 	Env        struct {
 		Org      string            `yaml:"ORG"`
 		Space    string            `yaml:"SPACE"`
-		Branch string `yaml:"BRANCH"`
+		Branch   string            `yaml:"BRANCH"`
 		TimeZone string            `yaml:"TZ"`
 		Lang     string            `yaml:"LANG"`
 		Copy     map[string]string `yaml:"COPY"`
-		TestUp map[string]string `yaml:"TESTUP"`
+		TestUp   map[string]string `yaml:"TESTUP"`
 	} `yaml:"env"`
 }
 
@@ -43,7 +43,7 @@ func NewManifest(manifestFile, branch, host string) (*Manifest, error) {
 		return nil, err
 	}
 	for _, app := range m.Applications {
-		if app.Env.TestUp != nil {
+		if app.Env.TestUp == nil {
 			continue
 		}
 		parameters := []string{"domain", "host"}
@@ -54,7 +54,7 @@ func NewManifest(manifestFile, branch, host string) (*Manifest, error) {
 			}
 		}
 	}
-	if branch != ""{
+	if branch != "" {
 		for _, app := range m.Applications {
 			app.Env.Branch = branch
 		}

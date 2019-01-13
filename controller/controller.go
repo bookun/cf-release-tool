@@ -12,10 +12,9 @@ type CurrentInfoGetter interface {
 
 // Controller decides usecase, BlueGreenDeployment or normal Deployment.
 type Controller struct {
-	InputPort    usecase.InputPort
-	InfoGetter   CurrentInfoGetter
+	InputPort  usecase.InputPort
+	InfoGetter CurrentInfoGetter
 }
-
 
 // Release executes deployment.
 // If there is application you want to release, this method executes normal deployment.

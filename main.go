@@ -20,7 +20,6 @@ type Plug struct {
 	force  *bool
 }
 
-
 // Run is exectuted for the first time
 // This Method is implements about Run method in code.cloudfoundry.org/cli/plugin
 func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
@@ -46,8 +45,8 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 		client := client.NewClient(cliConnection, app, *force)
 		inputPort := usecase.NewUsecase(app.Name, client)
 		ctl := &controller.Controller{
-			InputPort:    inputPort,
-			InfoGetter:   client,
+			InputPort:  inputPort,
+			InfoGetter: client,
 		}
 		if err := ctl.Release(); err != nil {
 			fmt.Println(err)
@@ -83,7 +82,6 @@ func (c *Plug) GetMetadata() plugin.PluginMetadata {
 		},
 	}
 }
-
 
 func main() {
 	plugin.Start(new(Plug))
