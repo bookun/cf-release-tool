@@ -113,10 +113,12 @@ func (c *Client) DeleteApps(appKind string) error {
 
 // MapRoute executes cf map-route
 func (c *Client) MapRoute(name string) error {
+	confirmFlag := false
 	domain := c.app.Domain
 	host := c.app.Host
 	if name != c.app.Name {
 		host = name
+		confirmFlag = true
 	}
 	if domain == "" {
 		err := fmt.Errorf("domain is not be set")
@@ -132,9 +134,12 @@ func (c *Client) MapRoute(name string) error {
 		testDomain := c.app.Env.TestUp["domain"]
 		testHost := c.app.Env.TestUp["host"]
 		if _, err := c.cc.CliCommand("map-route", name, testDomain, "--hostname", testHost); err != nil {
-			if err := c.confirm(); err != nil {
-				return err
-			}
+			return err
+		}
+	}
+	if confirmFlag {
+		if err := c.confirm(); err != nil {
+			return err
 		}
 	}
 	return nil
