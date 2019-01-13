@@ -158,7 +158,7 @@ func (c *Client) UnMapRoute(app string) error {
 				return err
 			}
 			if app != c.app.Name {
-				if _, err := c.cc.CliCommand("delete-route", domain, "--hotname", host); err != nil {
+				if _, err := c.cc.CliCommand("delete-route", domain, "--hostname", host); err != nil {
 					return err
 				}
 			}
