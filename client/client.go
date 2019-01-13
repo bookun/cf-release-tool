@@ -2,46 +2,34 @@ package client
 
 import (
 	"fmt"
+	"github.com/bookun/cf-release-tool/entity"
+	"github.com/cloudfoundry/cli/plugin"
 	"os"
 	"os/exec"
 	"sort"
-	"strconv"
 	"strings"
-	"time"
-
-	"github.com/cloudfoundry/cli/plugin"
 )
 
 // Client operates cloudfoundry API.
 type Client struct {
-	cc    plugin.CliConnection
-	force bool
+	cc           plugin.CliConnection
+	app          entity.App
+	force        bool
+	manifestFile string
 }
 
 // NewClient init Client
-func NewClient(cc plugin.CliConnection, force bool) *Client {
+func NewClient(cc plugin.CliConnection, app entity.App, force bool) *Client {
 	return &Client{
 		cc:    cc,
+		app:   app,
 		force: force,
 	}
 }
 
 // Init prepare material, git branch, and cf target.
-func (c *Client) Init(copyTargets map[string]string, branch, org, space string) error {
-	//if envFile != "" {
-	//	exec.Command("cp", envFile, "./.env").Run()
-	//}
-	//if _, err := os.Stat("./.bp-config"); err == nil {
-	//	if err := exec.Command("rm", "-rf", "./.bp-config").Run(); err != nil {
-	//		err = fmt.Errorf("failed to remove a default bp-config directory")
-	//		return err
-	//	}
-	//}
-	//if err := exec.Command("cp", "-rf", materialDir, "./.bp-config").Run(); err != nil {
-	//	err = fmt.Errorf("failed to copy from %s to .bp-config", materialDir)
-	//	return err
-	//}
-	for from, to := range copyTargets {
+func (c *Client) Init() error {
+	for from, to := range c.app.Env.Copy {
 		if _, err := os.Stat(to); err == nil {
 			if err := exec.Command("rm", "-fr", to).Run(); err != nil {
 				err = fmt.Errorf("failed to remove %s before copy", to)
@@ -53,6 +41,7 @@ func (c *Client) Init(copyTargets map[string]string, branch, org, space string) 
 			return err
 		}
 	}
+	branch := c.app.Env.Branch
 	if branch != "" {
 		if err := exec.Command("git", "checkout", branch).Run(); err != nil {
 			err = fmt.Errorf("failed to checkout branch")
@@ -63,45 +52,45 @@ func (c *Client) Init(copyTargets map[string]string, branch, org, space string) 
 			return err
 		}
 	}
-	if _, err := c.cc.CliCommand("target", "-o", org, "-s", space); err != nil {
+	if _, err := c.cc.CliCommand("target", "-o", c.app.Env.Org, "-s", c.app.Env.Space); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Push executes cf push.
-func (c *Client) Push(app, manifestFile string) error {
-	if _, err := c.cc.CliCommand("push", app, "-f", manifestFile); err != nil {
+func (c *Client) Push(name string) error {
+	if _, err := c.cc.CliCommand("push", name, "-f", c.manifestFile); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Rename executes cf rename.
-func (c *Client) Rename(oldApp, newApp string) error {
-	if _, err := c.cc.CliCommand("rename", oldApp, newApp); err != nil {
+// RenameFrom executes cf rename from arg to target app name.
+func (c *Client) Rename(from, to string) error {
+	if _, err := c.cc.CliCommand("rename", from, to); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Stop executes cf stop
-func (c *Client) Stop(app string) error {
-	if _, err := c.cc.CliCommand("stop", app); err != nil {
+func (c *Client) Stop(name string) error {
+	if _, err := c.cc.CliCommand("stop", name); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Delete executes cf delete
-func (c *Client) Delete(app string) error {
+func (c *Client) DeleteApps(appKind string) error {
 	apps, err := c.cc.GetApps()
 	var appNames []string
 	if err != nil {
 		return err
 	}
 	for _, v := range apps {
-		if strings.Contains(v.Name, app) && v.Name != app {
+		if strings.Contains(v.Name, appKind) && v.Name != appKind {
 			appNames = append(appNames, v.Name)
 		}
 	}
@@ -123,14 +112,27 @@ func (c *Client) Delete(app string) error {
 }
 
 // MapRoute executes cf map-route
-func (c *Client) MapRoute(app, domain, host string) error {
-	if domain != "" {
-		if host != "" {
-			if _, err := c.cc.CliCommand("map-route", app, domain, "--hostname", host); err != nil {
-				return err
-			}
-		} else {
-			if _, err := c.cc.CliCommand("map-route", app, domain); err != nil {
+func (c *Client) MapRoute(name string) error {
+	domain := c.app.Domain
+	host := c.app.Host
+	if name != c.app.Name {
+		host = name
+	}
+	if domain == "" {
+		err := fmt.Errorf("domain is not be set")
+		return err
+	}
+	if host == "" {
+		if _, err := c.cc.CliCommand("map-route", name, domain); err != nil {
+			return err
+		}
+		return nil
+	}
+	if _, err := c.cc.CliCommand("map-route", name, domain, "--hostname", host); err != nil {
+		testDomain := c.app.Env.TestUp["domain"]
+		testHost := c.app.Env.TestUp["host"]
+		if _, err := c.cc.CliCommand("map-route", name, testDomain, "--hostname", testHost); err != nil {
+			if err := c.confirm(); err != nil {
 				return err
 			}
 		}
@@ -171,35 +173,53 @@ func (c *Client) DeleteRoute(domain, host string) error {
 }
 
 // TestUp execute map-route test host
-func (c *Client) TestUp(app, domain string) (bool, error) {
-	if !c.force {
-		var confirm string
-		tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
-		if err := c.MapRoute(app, domain, tempHost); err != nil {
-			return false, err
-		}
-		fmt.Printf("Is it displayed properly? [y/n]")
-		if _, err := fmt.Scan(&confirm); err != nil {
-			return false, err
-		}
-		if confirm == "y" {
-			if err := c.UnMapRoute(app); err != nil {
-				return false, err
-			}
-			if err := c.DeleteRoute(domain, tempHost); err != nil {
-				return false, err
-			}
-			return true, nil
-		}
-		if err := c.UnMapRoute(app); err != nil {
-			return false, err
-		}
-		if err := c.Delete(app); err != nil {
-			return false, err
-		}
-		return false, nil
+//func (c *Client) TestUp(app, domain string) (bool, error) {
+//	if !c.force {
+//		var confirm string
+//		tempHost := fmt.Sprintf("test-%s-%s", app, strconv.FormatInt(time.Now().Unix(), 10))
+//		domain := c.app.Env.TestUp["domain"]
+//		host := c.app.Env.TestUp["host"]
+//		if domain == "" || host == "" {
+//			//err := fmt.Errorf("domain or host for testup is not be set")
+//			return true, nil
+//		}
+//		if err := c.MapRoute(app, domain, host); err != nil {
+//			return false, err
+//		}
+//		fmt.Printf("Is it displayed properly? [y/n]")
+//		if _, err := fmt.Scan(&confirm); err != nil {
+//			return false, err
+//		}
+//		if confirm == "y" {
+//			if err := c.UnMapRoute(app); err != nil {
+//				return false, err
+//			}
+//			if err := c.DeleteRoute(domain, tempHost); err != nil {
+//				return false, err
+//			}
+//			return true, nil
+//		}
+//		if err := c.UnMapRoute(app); err != nil {
+//			return false, err
+//		}
+//		if err := c.Delete(app); err != nil {
+//			return false, err
+//		}
+//		return false, nil
+//	}
+//	return true, nil
+//}
+
+func (c *Client) confirm() error {
+	if c.force {
+		return nil
 	}
-	return true, nil
+	var confirm string
+	fmt.Printf("Is it displayed properly? [y/n]")
+	if _, err := fmt.Scan(&confirm); err != nil {
+		return err
+	}
+	return nil
 }
 
 // CreateBlueName execute naming.
@@ -215,8 +235,8 @@ func (c *Client) CreateBlueName(app string) (string, error) {
 }
 
 // AppExists check if there is a app in your space
-func (c *Client) AppExists(app string) error {
-	_, err := c.cc.GetApp(app)
+func (c *Client) AppExists() error {
+	_, err := c.cc.GetApp(c.app.Name)
 	if err != nil {
 		return err
 	}

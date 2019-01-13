@@ -1,34 +1,38 @@
 package usecase
 
-import (
-	"github.com/bookun/cf-release-tool/entity"
-)
-
 // CfManager is aggregation of methods.
 // Each methods is implemented in manager package.
-type CfManager interface {
-	Init(copyTargets map[string]string, branch, org, space string) error
-	GreenPush(app, manifestFile, domain, host string) (string, error)
-	Push(app, manifestFile, domain, host string) error
-	Exchange(app, blueApp string) (string, error)
-	BlueDelete(app, domain, host string) error
+type CfClient interface {
+	Init() error
+	Push(name string) error
+	Rename(from, to string) error
+	//RenameFrom(from string) error
+	//RenameTo(to string) error
+	Stop(app string) error
+	DeleteApps(app string) error
+	MapRoute(app string) error
+	UnMapRoute(app string) error
+	//TestUp(app, domain string) (bool, error)
+	CreateBlueName(app string) (string, error)
 }
 
 // InputPort is called by controller
 type InputPort interface {
-	BlueGreenDeployment(entity entity.Deploy, domain, host string) error
-	Deployment(entity entity.Deploy, domain, host string) error
+	BlueGreenDeployment() error
+	Deployment() error
 }
 
 // Usecase has CFManeger
 type Usecase struct {
-	client CfManager
+	appName string
+	client CfClient
 }
 
 // NewUsecase init Usecase.
-func NewUsecase(manager CfManager) *Usecase {
+func NewUsecase(appName string, client CfClient) *Usecase {
 	return &Usecase{
-		client: manager,
+		appName:appName,
+		client: client,
 	}
 }
 
@@ -36,31 +40,54 @@ func NewUsecase(manager CfManager) *Usecase {
 // At first, it deploys new app(green app) and map-route.
 // Then, it exchanges name between green app and one that already deployed (blue app).
 // Finally, it deletes blue app.
-func (u *Usecase) BlueGreenDeployment(entity entity.Deploy, domain, host string) error {
-	if err := u.client.Init(entity.CopyTargets, entity.Branch, entity.Org, entity.Space); err != nil {
+func (u *Usecase) BlueGreenDeployment() error {
+	if err := u.client.Init(); err != nil {
 		return err
 	}
-	greenApp, err := u.client.GreenPush(entity.App, entity.ManifestFile, domain, host)
+	greenAppName := "green-"+u.appName
+	blueAppName, err := u.client.CreateBlueName(u.appName)
 	if err != nil {
 		return err
 	}
-	blueApp, err := u.client.Exchange(entity.App, greenApp)
-	if err != nil {
+	if err := u.client.Push(greenAppName); err != nil {
 		return err
 	}
-
-	if err := u.client.BlueDelete(blueApp, domain, host); err != nil {
+	if err := u.client.MapRoute(greenAppName); err != nil {
+		return err
+	}
+	if err := u.client.UnMapRoute(greenAppName); err != nil {
+		return err
+	}
+	if err := u.client.Rename(u.appName, blueAppName); err != nil {
+		return err
+	}
+	if err := u.client.Rename(greenAppName, u.appName); err != nil {
+		return err
+	}
+	if err := u.client.MapRoute(u.appName); err != nil {
+		return err
+	}
+	if err := u.client.UnMapRoute(blueAppName); err != nil {
+		return err
+	}
+	if err := u.client.Stop(blueAppName); err != nil {
+		return err
+	}
+	if err := u.client.DeleteApps(u.appName); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Deployment executes deploy an app.
-func (u *Usecase) Deployment(entity entity.Deploy, domain, host string) error {
-	if err := u.client.Init(entity.CopyTargets, entity.Branch, entity.Org, entity.Space); err != nil {
+func (u *Usecase) Deployment() error {
+	if err := u.client.Init(); err != nil {
 		return err
 	}
-	if err := u.client.Push(entity.App, entity.ManifestFile, domain, host); err != nil {
+	if err := u.client.Push(u.appName); err != nil {
+		return err
+	}
+	if err := u.client.MapRoute(u.appName); err != nil {
 		return err
 	}
 	return nil

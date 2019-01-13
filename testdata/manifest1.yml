@@ -17,5 +17,8 @@ applications:
     COPY: 
       ./.bp-config.bookun: ./.bp-config
       ./.env.dev: ./.env
+    TESTUP:
+      domain: ms10.cf001.goo.ne.jp
+      host: testup
       
 

@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/bookun/cf-release-tool/entity"
 	"os"
 
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/bookun/cf-release-tool/client"
 	"github.com/bookun/cf-release-tool/controller"
-	"github.com/bookun/cf-release-tool/manager"
 	"github.com/bookun/cf-release-tool/usecase"
 )
 
@@ -19,6 +19,7 @@ type Plug struct {
 	host   *string
 	force  *bool
 }
+
 
 // Run is exectuted for the first time
 // This Method is implements about Run method in code.cloudfoundry.org/cli/plugin
@@ -36,19 +37,22 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 		os.Exit(1)
 	}
 	//client := client.NewDummyClient(os.Stdout)
-	client := client.NewClient(cliConnection, *force)
-	manager := manager.NewManager(client)
-	inputPort := usecase.NewUsecase(manager)
-	ctl := &controller.Controller{
-		InputPort:    inputPort,
-		InfoGetter:   client,
-		ManifestFile: *manifestFile,
-		Branch:       *branch,
-		Host:         *host,
-	}
-	if err := ctl.Release(); err != nil {
+	manifest, err := entity.NewManifest(*manifestFile, *branch, *host)
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+	for _, app := range manifest.Applications {
+		client := client.NewClient(cliConnection, app, *force)
+		inputPort := usecase.NewUsecase(app.Name, client)
+		ctl := &controller.Controller{
+			InputPort:    inputPort,
+			InfoGetter:   client,
+		}
+		if err := ctl.Release(); err != nil {
+			fmt.Println(err)
+			continue
+		}
 	}
 }
 
@@ -79,6 +83,7 @@ func (c *Plug) GetMetadata() plugin.PluginMetadata {
 		},
 	}
 }
+
 
 func main() {
 	plugin.Start(new(Plug))
