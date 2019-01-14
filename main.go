@@ -42,7 +42,7 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 		os.Exit(1)
 	}
 	for _, app := range manifest.Applications {
-		client := client.NewClient(cliConnection, app, *force)
+		client := client.NewClient(cliConnection, app, *force, *manifestFile)
 		inputPort := usecase.NewUsecase(app.Name, client)
 		ctl := &controller.Controller{
 			InputPort:  inputPort,

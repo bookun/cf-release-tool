@@ -19,11 +19,12 @@ type Client struct {
 }
 
 // NewClient init Client
-func NewClient(cc plugin.CliConnection, app entity.App, force bool) *Client {
+func NewClient(cc plugin.CliConnection, app entity.App, force bool, manifest string) *Client {
 	return &Client{
 		cc:    cc,
 		app:   app,
 		force: force,
+		manifestFile: manifest,
 	}
 }
 
