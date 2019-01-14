@@ -126,6 +126,7 @@ func (c *Client) MapRoute(name string) error {
 		if c.app.Env.TestUp != nil {
 			domain = c.app.Env.TestUp["domain"]
 			host = c.app.Env.TestUp["host"]
+			fmt.Println(domain, host)
 		}
 	}
 	if host == "" {
@@ -154,26 +155,31 @@ func (c *Client) UnMapRoute(app string) error {
 	for _, route := range appInfo.Routes {
 		domain := route.Domain.Name
 		host := route.Host
-		if domain == "" {
-			err := fmt.Errorf("the domain is not be set")
-			return err
-		}
+		args := []string{"unmap-route", app, domain}
 		if host != "" {
-			if _, err := c.cc.CliCommand("unmap-route", app, domain, "--hostname", host); err != nil {
-				return err
-			}
-			if domain != c.app.Domain || host != c.app.Host {
-				if _, err := c.cc.CliCommand("delete-route", domain, "--hostname", host); err != nil {
-					return err
-				}
-			}
-			return nil
+			args = append(args, "-n", host)
 		}
-		if _, err := c.cc.CliCommand("unmap-route", app, domain); err != nil {
+		if _, err := c.cc.CliCommand(args...); err != nil {
 			return err
 		}
-		if domain != c.app.Domain || host != c.app.Host {
-			if _, err := c.cc.CliCommand("delete-route", domain, "--hostname", host); err != nil {
+	}
+	return nil
+}
+
+func (c *Client) DeleteRoute (app string) error {
+	appInfo, err := c.cc.GetApp(app)
+	if err != nil {
+		return err
+	}
+	for _, route := range appInfo.Routes {
+		domain := route.Domain.Name
+		host := route.Host
+		args := []string{"delete-route", "-f", domain}
+		if host != "" {
+			args = append(args, "-n", host)
+		}
+		if host != c.app.Host || domain != c.app.Domain {
+			if _, err := c.cc.CliCommand(args...); err != nil {
 				return err
 			}
 		}

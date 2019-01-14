@@ -12,7 +12,7 @@ type CfClient interface {
 	DeleteApps(app string) error
 	MapRoute(app string) error
 	UnMapRoute(app string) error
-	//DeleteRoute(app string) error
+	DeleteRoute(app string) error
 	//TestUp(app, domain string) (bool, error)
 	CreateBlueName(app string) (string, error)
 }
@@ -56,7 +56,7 @@ func (u *Usecase) BlueGreenDeployment() error {
 	if err := u.client.MapRoute(greenAppName); err != nil {
 		return err
 	}
-	if err := u.client.UnMapRoute(greenAppName); err != nil {
+	if err := u.client.DeleteRoute(greenAppName); err != nil {
 		return err
 	}
 	if err := u.client.Rename(u.appName, blueAppName); err != nil {
