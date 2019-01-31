@@ -2,10 +2,11 @@ package controller
 
 import (
 	"errors"
+	"io/ioutil"
+
 	"github.com/bookun/cf-release-tool/entity"
 	"github.com/bookun/cf-release-tool/usecase"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 )
 
 // CurrentInfoGetter interface has AppExists method.
@@ -21,6 +22,7 @@ type Controller struct {
 	ManifestFile string
 	Branch       string
 	Host         string
+	Name         string
 }
 
 // Manifest has information of manifest.yml
@@ -69,6 +71,9 @@ func (c *Controller) Release() error {
 			ManifestFile: c.ManifestFile,
 			Branch:       c.Branch,
 			CopyTargets:  targetApp.Env.Copy,
+		}
+		if c.Name != "" {
+			entity.App = c.Name
 		}
 		if c.InfoGetter.AppExists(entity.App) != nil {
 			if err := c.InputPort.Deployment(entity, domain, host); err != nil {

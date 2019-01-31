@@ -14,6 +14,7 @@ import (
 
 // Plug has flag information
 type Plug struct {
+	name   *string
 	file   *string
 	branch *string
 	host   *string
@@ -30,6 +31,7 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 	manifestFile := releaseFlagSet.String("f", "manifest.yml", "The app will be released based on this manifest file")
 	branch := releaseFlagSet.String("b", "", "An app is released by using this branch")
 	host := releaseFlagSet.String("n", "", "An app is released with hostname")
+	name := releaseFlagSet.String("name", "", "An app is released with hostname")
 	force := releaseFlagSet.Bool("y", false, "Answer yes for all question")
 	if err := releaseFlagSet.Parse(args[1:]); err != nil {
 		fmt.Println(err)
@@ -45,6 +47,7 @@ func (c *Plug) Run(cliConnection plugin.CliConnection, args []string) {
 		ManifestFile: *manifestFile,
 		Branch:       *branch,
 		Host:         *host,
+		Name:         *name,
 	}
 	if err := ctl.Release(); err != nil {
 		fmt.Println(err)
