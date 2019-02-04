@@ -2,6 +2,7 @@ package manager
 
 import (
 	"errors"
+	"regexp"
 )
 
 // Client has aggregation of methods.
@@ -96,8 +97,9 @@ func (m *Manager) BlueDelete(app, domain, host string) error {
 		return err
 	}
 	// TODO: 本当はここで商用にエラーが多発してないかとかチェックしたい
-	//appType := strings.Split(app, "-")[0]
-	if err := m.client.Delete(app); err != nil {
+	pat := regexp.MustCompile(`^(.+)-\d+$`)
+	appType := pat.ReplaceAllString(app, "$1")
+	if err := m.client.Delete(appType); err != nil {
 		return err
 	}
 	return nil
