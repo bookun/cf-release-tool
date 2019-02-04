@@ -44,12 +44,12 @@ func (u *Usecase) BlueGreenDeployment(entity entity.Deploy, domain, host string)
 	if err != nil {
 		return err
 	}
-	blueApp, err := u.client.Exchange(entity.App, greenApp)
+	_, err = u.client.Exchange(entity.App, greenApp)
 	if err != nil {
 		return err
 	}
 
-	if err := u.client.BlueDelete(blueApp, domain, host); err != nil {
+	if err := u.client.BlueDelete(entity.App, domain, host); err != nil {
 		return err
 	}
 	return nil

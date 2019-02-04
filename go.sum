@@ -1,7 +1,7 @@
-code.cloudfoundry.org/cli v6.41.0+incompatible h1:qb7wVJgSWBFbYGcJxkT+624/JM4D7V8bl4J/11BK/Sc=
-code.cloudfoundry.org/cli v6.41.0+incompatible/go.mod h1:e4d+EpbwevNhyTZKybrLlyTvpH+W22vMsmdmcTxs/Fo=
-github.com/cloudfoundry/cli v6.41.0+incompatible h1:Q7sT24W1f7GJe1t5ALfEoHTHQ4lBx+WnyVCdP5DQS/o=
-github.com/cloudfoundry/cli v6.41.0+incompatible/go.mod h1:uUVSLzSuwWNhis5+tY5XRUp66kLbHhBktg8b3ZfcJHI=
+code.cloudfoundry.org/cli v6.42.0+incompatible h1:yr85A3rAoGYFSV2y1w1pP1s0Ct2tgBQqwaBaIsK/zdQ=
+code.cloudfoundry.org/cli v6.42.0+incompatible/go.mod h1:e4d+EpbwevNhyTZKybrLlyTvpH+W22vMsmdmcTxs/Fo=
+github.com/cloudfoundry/cli v6.42.0+incompatible h1:wccca2Nl23Ulk/fzZmrNNu/ETYxmVlIPvwdWJK1SkGg=
+github.com/cloudfoundry/cli v6.42.0+incompatible/go.mod h1:uUVSLzSuwWNhis5+tY5XRUp66kLbHhBktg8b3ZfcJHI=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
