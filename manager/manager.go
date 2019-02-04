@@ -2,7 +2,6 @@ package manager
 
 import (
 	"errors"
-	"strings"
 )
 
 // Client has aggregation of methods.
@@ -97,8 +96,8 @@ func (m *Manager) BlueDelete(app, domain, host string) error {
 		return err
 	}
 	// TODO: 本当はここで商用にエラーが多発してないかとかチェックしたい
-	appType := strings.Split(app, "-")[0]
-	if err := m.client.Delete(appType); err != nil {
+	//appType := strings.Split(app, "-")[0]
+	if err := m.client.Delete(app); err != nil {
 		return err
 	}
 	return nil
